@@ -292,6 +292,10 @@ External profiles are not assumed to have BitPorn's image-host behaviour. Supply
 
 Pumpkin Forge uses backend checks in addition to the browser interface. This matters because browser controls alone can be bypassed by editing a page or sending a direct request.
 
+> **🚫 BitPorn image host restriction**
+>
+> BitPorn's image host is configured for **BitPorn uploads only**. It must not be used for external trackers. If an external UNIT3D upload contains BitPorn-hosted image URLs, Pumpkin Forge **blocks the upload before anything is sent**. Replace those URLs with images hosted by the destination tracker, then return to Final Review.
+
 Before an upload, the application checks the selected tracker profile, announce identity, required credentials, torrent file, description, and image fields.
 
 BitPorn-hosted image usage is restricted to the BitPorn workflow. If a release is configured for another tracker while the description contains BitPorn-hosted image URLs, the upload is blocked with a clear message asking the user to replace the image host.
