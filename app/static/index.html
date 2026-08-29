@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#191b20">
+  <title>Pumpkin Forge</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-copy">
+        <strong id="brand-name">Pumpkin Forge</strong>
+        <div class="brand-meta">
+          <small>Release Builder <span class="brand-dot">•</span> <span id="brand-version">v…</span></small>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-group-label">Workspace</div>
+    <nav class="sidebar-nav" aria-label="Main navigation">
+      <button class="nav active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v9h-6zM4 14h6v6H4zM14 17h6v3h-6z"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav" data-view="queue">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h14"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>
+        <span>Queue</span>
+      </button>
+      <button class="nav" data-view="description">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z"/><path d="M15 3v5h4M8 12h8M8 16h6"/></svg>
+        <span>Awaiting Description</span>
+      </button>
+      <button class="nav" data-view="review">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h5M8 17h4"/><path d="m15 16 1.5 1.5L20 14"/></svg>
+        <span>Final Review</span>
+      </button>
+      <button class="nav" data-view="history">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.6"/><path d="M4 4v4.6h4.6M12 8v5l3 2"/></svg>
+        <span>History</span>
+      </button>
+
+      <div class="nav-separator"></div>
+
+      <button class="nav" data-view="logs">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="m7 9 2 2-2 2M11 15h5"/></svg>
+        <span>Logs</span>
+      </button>
+      <button class="nav" data-view="bbcode-lab">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="m9 9-3 3 3 3M15 9l3 3-3 3"/></svg>
+        <span>BBCode Lab</span>
+      </button>
+      <button class="nav" data-view="settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1A8 8 0 0 0 15 6l-.3-2.6h-4L10.4 6A8 8 0 0 0 8 7.1l-2.4-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1A8 8 0 0 0 10.4 18l.3 2.6h4L15 18a8 8 0 0 0 1.5-1.1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 .1-1z"/></svg>
+        <span>Settings</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="sidebar-note">
+        <span class="dot"></span>
+        <div><strong>Worker online</strong><small>Local processing active</small></div>
+      </div>
+      <div class="sidebar-version">Local app · BitPorn workflow</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-copy">
+        <p class="eyebrow">Pumpkin Forge / Workspace</p>
+        <h1 id="page-title">Dashboard</h1>
+        <p class="page-subtitle">Prepare, check and send releases without losing sight of what the worker is doing.</p>
+      </div>
+      <div class="top-actions">
+        <button class="button ghost refresh-button" id="refresh" title="Reload current data">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5"/><path d="M19 12a7 7 0 1 0-2 5"/></svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </header>
+
+    <div id="github-issue-banner" class="github-issue-banner">
+      <span>Please report all issues on GitHub.</span>
+      <a href="https://github.com/OWNER/REPOSITORY/issues/new" target="_blank" rel="noreferrer">Report an issue on GitHub</a>
+    </div>
+
+    <section id="dashboard" class="view active">
+      <div class="section-intro">
+        <div><h2>At a glance</h2><p>Live counts from your local release workflow.</p></div>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="split">
+        <div class="panel">
+          <div class="panel-head">
+            <div><p class="eyebrow">Processing queue</p><h2>Current jobs</h2></div>
+            <button class="text-button" data-view-link="queue">View all</button>
+          </div>
+          <div id="dashboard-jobs" class="job-list"></div>
+        </div>
+        <div class="panel tracker-panel">
+          <div class="panel-head">
+            <div><p class="eyebrow">BitPorn guard</p><h2>Tracker status</h2></div>
+          </div>
+          <div id="tracker-status"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="queue" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <div><p class="eyebrow">Persistent queue</p><h2>All release jobs</h2><p class="panel-description">Everything detected, processing, waiting for input or already finished.</p></div>
+        </div>
+        <div id="queue-list" class="job-list"></div>
+      </div>
+    </section>
+
+    <section id="description" class="view">
+      <div class="panel">
+        <div class="panel-head panel-head-select">
+          <div><p class="eyebrow">Manual first-version workflow</p><h2>Build description</h2><p class="panel-description">Finish metadata, BBCode and upload flags before sending the release to final review.</p></div>
+          <select id="description-job" aria-label="Select description job"></select>
+        </div>
+        <div id="description-metadata"></div>
+        <div id="description-editor" class="editor-empty">Select an Awaiting Description job.</div>
+      </div>
+    </section>
+
+    <section id="review" class="view">
+      <div class="panel">
+        <div class="panel-head panel-head-select">
+          <div><p class="eyebrow">Upload gate</p><h2>Final review</h2><p class="panel-description">One last check of the torrent, flags, description and prepared images.</p></div>
+          <select id="review-job" aria-label="Select review job"></select>
+        </div>
+        <div id="review-content" class="editor-empty">Select a Final Review job.</div>
+      </div>
+    </section>
+
+    <section id="history" class="view">
+      <div class="panel">
+        <div class="panel-head"><div><p class="eyebrow">Recorded activity</p><h2>History</h2><p class="panel-description">Completed, failed, blocked and duplicate jobs remain here for reference.</p></div></div>
+        <div id="history-list" class="job-list"></div>
+      </div>
+    </section>
+
+    <section id="logs" class="view">
+      <div class="panel">
+        <div class="panel-head panel-head-select">
+          <div><p class="eyebrow">Job diagnostics</p><h2>Logs</h2><p class="panel-description">Follow each processing stage and see exactly where a job stopped.</p></div>
+          <select id="logs-job" aria-label="Select job logs"></select>
+        </div>
+        <div id="logs-summary" class="log-summary empty">Select a job to view its logs.</div>
+        <div id="logs-list" class="log-list"></div>
+      </div>
+    </section>
+
+    <section id="bbcode-lab" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <div><p class="eyebrow">Description tools</p><h2>BBCode Lab</h2><p class="panel-description">Test Unit3D-compatible BBCode in a blank workspace before using it in a release description.</p></div>
+        </div>
+        <iframe src="/static/PFBBCODE.html?v=1" title="BBCode Lab" style="display:block;width:100%;min-height:720px;border:1px solid var(--line);border-radius:7px;background:#fff"></iframe>
+      </div>
+    </section>
+
+    <section id="settings" class="view">
+      <div id="settings-tabs" class="settings-tabs" aria-label="Settings sections"></div>
+      <div id="settings-grid" class="settings-grid">
+        <div id="settings-core-panel" class="panel settings-tab-panel">
+          <div class="panel-head"><div><p class="eyebrow">Application</p><h2>Settings</h2><p class="panel-description">Local paths, processing behaviour, metadata and Thumb It options.</p></div></div>
+          <form id="settings-form" class="form-grid"></form>
+          <div id="update-card" class="update-card"></div>
+        </div>
+        <div id="tracker-settings-panel" class="panel settings-tab-panel">
+          <div class="panel-head"><div><p class="eyebrow">Tracker profile</p><h2>BitPorn tracker</h2><p class="panel-description">Connection details and UNIT3D mapping used during final upload.</p></div></div>
+          <form id="tracker-form" class="form-grid"></form>
+        </div>
+        <div id="folder-settings-panel" class="panel settings-tab-panel">
+          <div class="panel-head"><div><p class="eyebrow">Folder monitoring</p><h2>Monitored folders</h2><p class="panel-description">Watch release folders automatically, or add a single local release below.</p></div></div>
+          <form id="folder-form" class="form-grid"></form>
+          <div id="folder-list"></div>
+          <div class="settings-divider"></div>
+          <div class="panel-head compact-head"><div><p class="eyebrow">One-time processing</p><h2>Add local release</h2></div></div>
+          <form id="manual-release-form" class="form-grid">
+            <div class="field full">
+              <label>Local release folder</label>
+              <input name="source_path" type="text" placeholder="D:\Uploads\Movie.Name.2026">
+              <small class="field-note">Adds this folder once to the persistent queue; it does not create a monitor.</small>
+            </div>
+            <div class="field">
+              <label>Tracker</label>
+              <select name="tracker_id" id="manual-release-tracker"></select>
+              <small class="field-note">The selected tracker controls the announce URL and upload profile.</small>
+            </div>
+            <div class="form-actions"><button class="button primary" type="submit">Add local release to queue</button></div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="/static/app.js"></script>
+  <script src="/static/bbcode-tools.js"></script>
+</body>
+</html>

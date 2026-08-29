@@ -1,0 +1,26 @@
+# Pumpkin Forge local state and secrets
+data/
+storage/
+delete/
+.codex_backup_*/
+
+# Environment files may contain API keys or tracker credentials.
+.env
+.env.*
+!.env.example
+
+# Python cache and local logs
+__pycache__/
+*.py[cod]
+*.log
+
+# Databases and temporary files
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.tmp
+
+# Operating-system files
+Thumbs.db
+Desktop.ini

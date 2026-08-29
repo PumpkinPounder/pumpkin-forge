@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pumpkin Forge · BBCode Lab</title>
+<style>
+:root{
+  --bg:#0b0f14;
+  --panel:#111821;
+  --panel2:#151e29;
+  --border:#273241;
+  --text:#dce6f2;
+  --muted:#8998aa;
+  --accent:#00d9ff;
+  --accent2:#ff3aa9;
+  --danger:#ff6978;
+  --ok:#63d392;
+  --shadow:0 12px 35px rgba(0,0,0,.32);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.app{min-height:100%;display:flex;flex-direction:column}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  background:rgba(11,15,20,.96);position:sticky;top:0;z-index:20
+}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{
+  width:38px;height:38px;border:1px solid #31506b;border-radius:10px;
+  display:grid;place-items:center;background:#0e1720;font-weight:900;color:var(--accent);
+  box-shadow:inset 0 0 20px rgba(0,217,255,.07)
+}
+.brand h1{font-size:16px;margin:0}
+.brand p{margin:1px 0 0;color:var(--muted);font-size:12px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{
+  border:1px solid var(--border);background:var(--panel2);color:var(--text);
+  padding:8px 11px;border-radius:7px
+}
+.btn:hover{border-color:#3a4a60;background:#1a2633}
+.btn.primary{border-color:#16677a;color:#dffaff;background:#0c3440}
+.btn.danger{border-color:#6b3037;color:#ffdfe3;background:#32171b}
+
+.toolbar{
+  padding:10px 14px;border-bottom:1px solid var(--border);background:#0e141c;
+  display:flex;gap:7px;align-items:center;flex-wrap:wrap
+}
+.tool{
+  min-width:34px;height:33px;padding:0 9px;border-radius:6px;border:1px solid var(--border);
+  color:#d8e5f1;background:#151e28;font-weight:700
+}
+.tool:hover{border-color:#42617e;background:#1a2734}
+.sep{width:1px;height:24px;background:var(--border);margin:0 2px}
+.tool-input{
+  height:33px;border:1px solid var(--border);border-radius:6px;background:#0e151d;color:var(--text);
+  padding:0 8px
+}
+#sizeInput{width:58px}
+#colorInput{width:42px;padding:3px}
+
+.workspace{
+  flex:1;display:grid;grid-template-columns:minmax(320px,1fr) minmax(320px,1fr);
+  gap:1px;background:var(--border);min-height:0
+}
+.pane{background:var(--panel);min-height:0;display:flex;flex-direction:column}
+.pane-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:9px 12px;border-bottom:1px solid var(--border);background:#101720
+}
+.pane-title{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#aebdcd}
+.stats{color:var(--muted);font-size:12px;white-space:nowrap}
+
+.editor-wrap{position:relative;flex:1;min-height:420px}
+#editor{
+  width:100%;height:100%;min-height:420px;resize:none;border:0;outline:0;
+  padding:16px 17px 80px;background:#0d131a;color:#dce7f3;
+  font:13px/1.55 "Cascadia Code","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  tab-size:4
+}
+.editor-footer{
+  position:absolute;left:12px;right:12px;bottom:10px;
+  display:flex;justify-content:space-between;gap:12px;pointer-events:none
+}
+.badge{
+  background:rgba(13,19,26,.92);border:1px solid var(--border);border-radius:999px;
+  padding:4px 8px;color:var(--muted);font-size:11px
+}
+
+.preview-scroll{flex:1;overflow:auto;padding:18px;min-height:420px;background:#0a0e13}
+.tracker-card{
+  min-height:100%;max-width:1250px;margin:0 auto;background:#111821;border:1px solid #253243;
+  border-radius:8px;box-shadow:var(--shadow);overflow:hidden
+}
+.tracker-head{
+  padding:10px 13px;background:#151e29;border-bottom:1px solid #263548;color:#93a4b7;
+  font-size:12px;display:flex;justify-content:space-between;gap:10px
+}
+#preview{
+  padding:20px;overflow-wrap:anywhere;color:#d9e2ec;min-height:350px;
+  font-size:14px;line-height:1.5
+}
+#preview img{max-width:100%;height:auto;vertical-align:middle}
+#preview a{color:#69c7ff;text-decoration:none}
+#preview a:hover{text-decoration:underline}
+#preview h1,#preview h2,#preview h3,#preview h4,#preview h5,#preview h6{color:#eef6ff;margin:.7em 0 .35em}
+#preview h1{font-size:2em} #preview h2{font-size:1.7em} #preview h3{font-size:1.45em}
+#preview h4{font-size:1.25em} #preview h5{font-size:1.1em} #preview h6{font-size:1em}
+#preview blockquote{
+  margin:10px 0;padding:10px 14px;border-left:4px solid #53677e;background:#0d141c;color:#c9d4df
+}
+#preview blockquote cite{display:block;color:#92a3b6;margin-bottom:7px;font-style:normal;font-weight:700}
+#preview ul,#preview ol{padding-left:28px}
+#preview table{border-collapse:collapse;max-width:100%;margin:10px 0}
+#preview th,#preview td{border:1px solid #35465a;padding:7px 9px;text-align:left}
+#preview th{background:#1a2633}
+#preview details{
+  margin:8px 0;border:1px solid #314155;border-radius:6px;background:#0d141c;overflow:hidden
+}
+#preview summary{cursor:pointer;padding:8px 11px;background:#172230;font-weight:700}
+#preview details>div{padding:10px}
+.bb-alert,.bb-note{padding:10px 12px;margin:9px 0;border-radius:6px}
+.bb-alert{background:#35161b;border:1px solid #6e3039;color:#ffd8dd}
+.bb-note{background:#102a34;border:1px solid #23576c;color:#d9f5ff}
+.bb-code{position:relative;margin:10px 0;background:#090d12;border:1px solid #293748;border-radius:7px}
+.bb-code pre{margin:0;padding:13px;overflow:auto}
+.bb-code code,.bb-pre{font-family:"Cascadia Code",Consolas,monospace;color:#cfe0ef}
+.bb-hr{border:0;border-top:1px solid #334356;margin:13px 0}
+.embed{
+  width:min(100%,560px);aspect-ratio:16/9;border:0;background:#080b0f
+}
+.comparison{overflow:auto;margin:12px 0}
+.comparison-grid{display:grid;gap:8px;min-width:480px}
+.comparison-item{background:#0d141c;border:1px solid #2b394a;border-radius:6px;padding:8px;text-align:center}
+.comparison-item strong{display:block;margin-bottom:7px}
+.comparison-item img{display:block;margin:0 auto;max-height:650px}
+
+.validation{
+  border-top:1px solid var(--border);padding:10px 12px;background:#101720;
+  display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap
+}
+.issue{
+  padding:5px 8px;border-radius:6px;border:1px solid #4a3440;background:#23171c;color:#efbac4;font-size:11px
+}
+.issue.ok{border-color:#285342;background:#10241c;color:#aee8c8}
+.issue.warn{border-color:#574924;background:#28220f;color:#f4dc9a}
+
+.fullscreen-preview .workspace{grid-template-columns:1fr}
+.fullscreen-preview .pane.editor-pane{display:none}
+.fullscreen-preview .preview-scroll{min-height:calc(100vh - 130px)}
+
+@media (max-width:900px){
+  .workspace{grid-template-columns:1fr}
+  .editor-wrap,#editor,.preview-scroll{min-height:440px}
+  .topbar{align-items:flex-start;flex-direction:column}
+}
+/* Pumpkin Forge embedded theme */
+:root{--bg:#f2f5f9;--panel:#ffffff;--panel2:#fbfcfe;--border:#dbe2ec;--text:#162033;--muted:#647087;--accent:#4269c7;--accent2:#ff9f1c;--danger:#d14d55;--ok:#16835a;--shadow:0 10px 26px rgba(27,42,70,.07)}
+body{background:var(--bg);color:var(--text)}
+.topbar{background:#fff;border-color:var(--border);box-shadow:0 4px 16px rgba(27,42,70,.05)}
+.logo{border-color:#26334a;background:#151d2d;color:#ff9f1c;box-shadow:0 8px 18px rgba(21,29,45,.15)}
+.brand h1{color:var(--text)}
+.btn{border-color:var(--border);background:#fff;color:var(--text)}.btn:hover{border-color:#b8c6d9;background:#f7f9fc}.btn.primary{border-color:#f0a13a;color:#202a3b;background:#ff9f1c}.btn.primary:hover{background:#ffad3a}.btn.danger{border-color:#e4b9bd;color:#a6313b;background:#fff7f7}
+.toolbar{background:#fff;border-color:var(--border)}.tool{border-color:#d3dce8;background:#fbfcfe;color:#35445d}.tool:hover{border-color:#8ca7e3;background:#f2f6ff}.tool-input{border-color:#d3dce8;background:#fff;color:var(--text)}.sep{background:#dbe2ec}
+.workspace{background:var(--border)}.pane{background:#fff}.pane-head{background:#fbfcfe;border-color:var(--border)}.pane-title{color:#58667e}.stats{color:#7a879b}
+#editor{background:#fbfcfe;color:var(--text)}.badge{background:#fff;border-color:var(--border);color:#718098}
+.preview-scroll{background:#f2f5f9}.tracker-card{background:#fff;border-color:#dbe2ec;box-shadow:var(--shadow)}.tracker-head{background:#fbfcfe;border-color:#e3e8ef;color:#718098}#preview{color:var(--text)}#preview h1,#preview h2,#preview h3,#preview h4,#preview h5,#preview h6{color:var(--text)}#preview blockquote{border-left-color:#91a6d8;background:#f5f8ff;color:#52627b}#preview blockquote cite{color:#72819a}#preview th,#preview td{border-color:#dbe2ec}#preview th{background:#f3f6fa}#preview details{border-color:#dbe2ec;background:#fbfcfe}#preview summary{background:#f3f6fa}.bb-alert{background:#fff2f3;border-color:#e4aeb3;color:#a6313b}.bb-note{background:#eef7f3;border-color:#a8d5c0;color:#216f52}.bb-code{background:#172235;border-color:#273650}.bb-code code,.bb-pre{color:#e1eafa}.bb-hr{border-color:#dbe2ec}.comparison-item{background:#fbfcfe;border-color:#dbe2ec}
+.validation{background:#fff;border-color:var(--border)}.issue{border-color:#e4b9bd;background:#fff7f7;color:#a6313b}.issue.ok{border-color:#a8d5c0;background:#eef7f3;color:#216f52}.issue.warn{border-color:#efd19a;background:#fffaf0;color:#99600d}
+.lab-actions{display:flex;align-items:center;gap:7px;margin-left:auto;flex-wrap:wrap}.lab-actions .btn{padding:7px 10px}
+@media (max-width:900px){.lab-actions{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="toolbar" aria-label="BBCode toolbar">
+    <button class="tool" data-wrap="[b]|[/b]" title="Bold">B</button>
+    <button class="tool" data-wrap="[i]|[/i]" title="Italic"><i>I</i></button>
+    <button class="tool" data-wrap="[u]|[/u]" title="Underline"><u>U</u></button>
+    <button class="tool" data-wrap="[s]|[/s]" title="Strike"><s>S</s></button>
+    <div class="sep"></div>
+
+    <button class="tool" data-wrap="[center]|[/center]" title="Center">C</button>
+    <button class="tool" data-wrap="[left]|[/left]" title="Left">L</button>
+    <button class="tool" data-wrap="[right]|[/right]" title="Right">R</button>
+    <div class="sep"></div>
+
+    <input class="tool-input" id="colorInput" type="color" value="#ff3aa9" title="Text colour">
+    <button class="tool" id="applyColorBtn" title="Apply colour">Colour</button>
+    <input class="tool-input" id="sizeInput" type="number" min="1" max="200" value="18" title="Font size">
+    <button class="tool" id="applySizeBtn" title="Apply size">Size</button>
+    <div class="sep"></div>
+
+    <button class="tool" id="linkBtn" title="Link">URL</button>
+    <button class="tool" id="imageBtn" title="Image">IMG</button>
+    <button class="tool" data-wrap="[quote]|[/quote]" title="Quote">Quote</button>
+    <button class="tool" data-wrap="[spoiler=Spoiler]|[/spoiler]" title="Spoiler">Spoiler</button>
+    <button class="tool" id="listBtn" title="Bullet list">List</button>
+    <button class="tool" id="orderedListBtn" title="Numbered list">1.</button>
+    <button class="tool" data-insert="[hr]" title="Horizontal rule">HR</button>
+    <button class="tool" data-wrap="[code]|[/code]" title="Code">Code</button>
+    <div class="lab-actions">
+      <button class="btn" id="loadSampleBtn">Load sample</button>
+      <button class="btn" id="copyBtn">Copy BBCode</button>
+      <button class="btn primary" id="previewModeBtn">Preview only</button>
+      <button class="btn danger" id="clearBtn">Clear</button>
+    </div>
+  </div>
+
+  <main class="workspace">
+    <section class="pane editor-pane">
+      <div class="pane-head">
+        <span class="pane-title">BBCode input</span>
+        <span class="stats" id="editorStats">0 chars</span>
+      </div>
+      <div class="editor-wrap">
+        <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+        <div class="editor-footer">
+          <span class="badge">Ctrl/Cmd + Enter: preview only</span>
+          <span class="badge" id="saveState">Live</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="pane preview-pane">
+      <div class="pane-head">
+        <span class="pane-title">Live tracker preview</span>
+        <span class="stats" id="previewStats">0 tags</span>
+      </div>
+      <div class="preview-scroll">
+        <div class="tracker-card">
+          <div class="tracker-head">
+            <span>Torrent description preview</span>
+            <span>UNIT3D-style render</span>
+          </div>
+          <div id="preview"></div>
+        </div>
+      </div>
+      <div class="validation" id="validation"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+const sample = `[center]
+[img=1000]https://imghost.dev/images/2026/07/06/5ee0e0024494.png[/img]
+
+[color=#00d9ff]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/color]
+[size=20][b][color=#ff3aa9](Exploitedcollegegirls.com Excogi.com) Dakota Tyler (Dakota Tyler - Extras 1)[/color][/b][/size]
+[color=#00d9ff]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/color]
+[/center]
+
+[center]
+[img=500]https://imghost.dev/images/2026/08/29/centerlongest_Exploitedcollegegirls.com_Excogi.com_Dakota_Tyler_Dakota_Tyler_-_Extras_1_28612d98222895b92.webp[/img]
+[/center]
+
+[center]
+[img=1200]https://imghost.dev/images/2026/08/29/release_info_5585d5d740b0.png[/img]
+[/center]
+
+[center]
+[color=#00d9ff]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/color]
+[size=18][b][color=#ff3aa9]SCREENSHOTS[/color][/b][/size]
+[color=#00d9ff]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/color]
+[/center]
+
+[center]
+[img=250]https://imghost.dev/images/2026/08/29/screenshot139ab414aeab18cab.webp[/img] [img=250]https://imghost.dev/images/2026/08/29/screenshot286f188304229aecd.webp[/img] [img=250]https://imghost.dev/images/2026/08/29/screenshot3b552f41e0a1a597b.webp[/img]
+[img=250]https://imghost.dev/images/2026/08/29/screenshot463ecd48e2984698f.webp[/img] [img=250]https://imghost.dev/images/2026/08/29/screenshot58f9d6d0b26bcef54.webp[/img] [img=250]https://imghost.dev/images/2026/08/29/screenshot658d1a012cd77f61e.webp[/img]
+[img=250]https://imghost.dev/images/2026/08/29/center1ba46146c59096cd1.webp[/img] [img=250]https://imghost.dev/images/2026/08/29/7027a72b0f63854698e1a72b8aae3bbac044654b.webp[/img]
+[/center]
+
+[center]
+[color=#00d9ff]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/color]
+[size=18][b][color=#ff3aa9]Seeding Notice[/color][/b][/size]
+[color=#ff3aa9]Seeding may be a little slow at first while the torrent propagates to my seedboxes. The larger the torrent, the longer this may take. Thanks for your patience.[/color]
+[color=#00d9ff]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/color]
+[/center]`;
+
+const editor = document.getElementById("editor");
+const preview = document.getElementById("preview");
+const validation = document.getElementById("validation");
+const editorStats = document.getElementById("editorStats");
+const previewStats = document.getElementById("previewStats");
+const app = document.getElementById("app");
+const previewModeBtn = document.getElementById("previewModeBtn");
+
+const blockTags = new Set([
+  "h1","h2","h3","h4","h5","h6","center","left","right","quote",
+  "list","code","alert","note","table","tr","th","td"
+]);
+
+const simpleTags = new Set([
+  "h1","h2","h3","h4","h5","h6","b","i","u","s","center","left","right",
+  "quote","code","pre","alert","note","sub","sup","small","table","tr","th","td","spoiler"
+]);
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value).replaceAll("`","&#096;");
+}
+
+function sanitizeUrl(value, image = false) {
+  const raw = String(value || "").trim();
+  try {
+    const u = new URL(raw);
+    if (!["http:","https:"].includes(u.protocol)) return "";
+    return u.href;
+  } catch {
+    return "";
+  }
+}
+
+function validColor(v) {
+  return /^(#[a-f0-9]{3,4}|#[a-f0-9]{6}|#[a-f0-9]{8}|[a-z]+)$/i.test(v || "");
+}
+
+function validFont(v) {
+  return /^[a-z0-9 ]+$/i.test(v || "");
+}
+
+function textContent(children) {
+  return children.map(child => {
+    if (child.type === "text") return child.value;
+    if (child.type === "raw") return child.value;
+    return textContent(child.children || []);
+  }).join("");
+}
+
+function recognisedOpen(inner) {
+  const t = inner.trim();
+
+  let m;
+  if (/^hr$/i.test(t)) return {void:true, tag:"hr"};
+  if (/^\*$/i.test(t)) return {void:true, tag:"li"};
+
+  if ((m = t.match(/^img width=(\d+)$/i))) return {tag:"img", param:m[1], kind:"img"};
+  if ((m = t.match(/^img=(\d+)(?:x\d+)?$/i))) return {tag:"img", param:m[1], kind:"img"};
+  if (/^img$/i.test(t)) return {tag:"img", param:null, kind:"img"};
+
+  if ((m = t.match(/^url=(.*)$/i))) return {tag:"url", param:m[1]};
+  if (/^url$/i.test(t)) return {tag:"url", param:null};
+
+  if ((m = t.match(/^size=(\d+)$/i))) return {tag:"size", param:m[1]};
+  if ((m = t.match(/^font=([a-z0-9 ]+)$/i))) return {tag:"font", param:m[1]};
+  if ((m = t.match(/^color=(#[a-f0-9]{3,4}|#[a-f0-9]{6}|#[a-f0-9]{8}|[a-z]+)$/i))) return {tag:"color", param:m[1]};
+
+  if ((m = t.match(/^quote=(.*)$/i))) return {tag:"quote", param:m[1]};
+  if ((m = t.match(/^spoiler=(.*)$/i))) return {tag:"spoiler", param:m[1]};
+
+  if (/^list$/i.test(t)) return {tag:"list", param:null};
+  if ((m = t.match(/^list=(1|a)$/i))) return {tag:"list", param:m[1].toLowerCase()};
+
+  if (/^youtube$/i.test(t)) return {tag:"youtube", param:null};
+  if (/^video$/i.test(t)) return {tag:"video", param:null};
+  if (/^video=(?:"youtube"|&quot;youtube&quot;)$/i.test(t)) return {tag:"video", param:"youtube"};
+
+  if ((m = t.match(/^comparison=(.*)$/i))) return {tag:"comparison", param:m[1]};
+
+  const lower = t.toLowerCase();
+  if (simpleTags.has(lower)) return {tag:lower, param:null};
+  return null;
+}
+
+function parseBBCode(source) {
+  const root = {type:"root", children:[]};
+  const stack = [root];
+  const issues = [];
+  let tags = 0;
+  let i = 0;
+
+  function current() { return stack[stack.length - 1]; }
+  function add(node) { current().children.push(node); }
+
+  while (i < source.length) {
+    const open = source.indexOf("[", i);
+    if (open === -1) {
+      add({type:"text", value:source.slice(i)});
+      break;
+    }
+    if (open > i) add({type:"text", value:source.slice(i, open)});
+
+    const closeBracket = source.indexOf("]", open + 1);
+    if (closeBracket === -1) {
+      add({type:"text", value:source.slice(open)});
+      break;
+    }
+
+    const whole = source.slice(open, closeBracket + 1);
+    const inner = source.slice(open + 1, closeBracket);
+
+    // Closing tag
+    if (inner.startsWith("/")) {
+      const closeName = inner.slice(1).trim().toLowerCase();
+      const top = current();
+
+      if (top.type === "tag" && top.tag === closeName) {
+        stack.pop();
+        tags++;
+      } else {
+        add({type:"text", value:whole});
+        issues.push(`Unexpected closing tag ${whole}`);
+      }
+      i = closeBracket + 1;
+      continue;
+    }
+
+    const info = recognisedOpen(inner);
+    if (!info) {
+      add({type:"text", value:whole});
+      if (/^[a-z]/i.test(inner.trim())) issues.push(`Unsupported tag ${whole}`);
+      i = closeBracket + 1;
+      continue;
+    }
+
+    tags++;
+
+    if (info.void) {
+      add({type:"void", tag:info.tag});
+      i = closeBracket + 1;
+      continue;
+    }
+
+    // UNIT3D code/pre are best previewed literally.
+    if (info.tag === "code" || info.tag === "pre") {
+      const endTag = `[/${info.tag}]`;
+      const lowerSource = source.toLowerCase();
+      const endPos = lowerSource.indexOf(endTag, closeBracket + 1);
+      if (endPos !== -1) {
+        add({
+          type:"rawtag",
+          tag:info.tag,
+          value:source.slice(closeBracket + 1, endPos)
+        });
+        tags++;
+        i = endPos + endTag.length;
+        continue;
+      }
+    }
+
+    const node = {
+      type:"tag",
+      tag:info.tag,
+      param:info.param ?? null,
+      children:[],
+      rawOpen:whole
+    };
+    add(node);
+    stack.push(node);
+    i = closeBracket + 1;
+  }
+
+  while (stack.length > 1) {
+    const node = stack.pop();
+    issues.push(`Unclosed tag [${node.tag}]`);
+  }
+
+  return {ast:root, issues:[...new Set(issues)], tags};
+}
+
+function nl(s) {
+  return s.replace(/\r\n|\n/g, "<br>");
+}
+
+function renderChildren(node) {
+  return (node.children || []).map(renderNode).join("");
+}
+
+function renderNode(node) {
+  if (node.type === "text") return nl(escapeHtml(node.value));
+
+  if (node.type === "void") {
+    if (node.tag === "hr") return '<hr class="bb-hr">';
+    if (node.tag === "li") return "<li>";
+    return "";
+  }
+
+  if (node.type === "rawtag") {
+    if (node.tag === "code") {
+      return `<div class="bb-code"><pre><code>${escapeHtml(node.value)}</code></pre></div>`;
+    }
+    return `<code class="bb-pre">${nl(escapeHtml(node.value))}</code>`;
+  }
+
+  if (node.type === "root") return renderChildren(node);
+
+  const body = renderChildren(node);
+  const rawText = textContent(node.children || []).trim();
+
+  switch (node.tag) {
+    case "h1": case "h2": case "h3": case "h4": case "h5": case "h6":
+      return `<${node.tag}>${body}</${node.tag}>`;
+    case "b": return `<b>${body}</b>`;
+    case "i": return `<i>${body}</i>`;
+    case "u": return `<u>${body}</u>`;
+    case "s": return `<s>${body}</s>`;
+    case "sub": return `<sub>${body}</sub>`;
+    case "sup": return `<sup>${body}</sup>`;
+    case "small": return `<small>${body}</small>`;
+
+    case "size": {
+      const n = Math.max(10, Math.min(100, parseInt(node.param || "10", 10) || 10));
+      return `<span style="font-size:${n}px">${body}</span>`;
+    }
+
+    case "font":
+      return validFont(node.param) ? `<span style="font-family:${escapeAttr(node.param)}">${body}</span>` : body;
+
+    case "color":
+      return validColor(node.param) ? `<span style="color:${escapeAttr(node.param)}">${body}</span>` : body;
+
+    case "center": return `<div style="text-align:center">${body}</div>`;
+    case "left": return `<div style="text-align:left">${body}</div>`;
+    case "right": return `<div style="text-align:right">${body}</div>`;
+
+    case "quote":
+      if (node.param !== null) {
+        return `<blockquote><cite>Quoting ${escapeHtml(node.param)}:</cite>${body}</blockquote>`;
+      }
+      return `<blockquote>${body}</blockquote>`;
+
+    case "list":
+      if (node.param === "1") return `<ol>${body}</ol>`;
+      if (node.param === "a") return `<ol type="a">${body}</ol>`;
+      return `<ul>${body}</ul>`;
+
+    case "alert": return `<div class="bb-alert">${body}</div>`;
+    case "note": return `<div class="bb-note">${body}</div>`;
+
+    case "table": return `<table>${body}</table>`;
+    case "tr": return `<tr>${body}</tr>`;
+    case "th": return `<th>${body}</th>`;
+    case "td": return `<td>${body}</td>`;
+
+    case "spoiler":
+      return `<details><summary>${escapeHtml(node.param || "Spoiler")}</summary><div>${body}</div></details>`;
+
+    case "url": {
+      const href = sanitizeUrl(node.param !== null ? node.param : rawText);
+      if (!href) return body;
+      return `<a href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer">${body || escapeHtml(href)}</a>`;
+    }
+
+    case "img": {
+      const src = sanitizeUrl(rawText, true);
+      if (!src) return `<span style="color:#ff7b87">[invalid image URL]</span>`;
+      const width = node.param ? Math.max(1, parseInt(node.param,10) || 1) : null;
+      const widthAttr = width ? ` width="${width}"` : "";
+      const style = width ? `style="width:${width}px;max-width:100%;height:auto;display:inline!important"` : `style="max-width:100%;height:auto;display:inline!important"`;
+      return `<img src="${escapeAttr(src)}"${widthAttr} loading="lazy" ${style} alt="">`;
+    }
+
+    case "youtube":
+    case "video": {
+      const id = rawText;
+      if (!/^[a-z0-9_-]{11}$/i.test(id)) return `<span style="color:#ff7b87">[invalid YouTube video id]</span>`;
+      return `<iframe class="embed" src="https://www.youtube-nocookie.com/embed/${escapeAttr(id)}?rel=0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    }
+
+    case "comparison": {
+      const labels = String(node.param || "").split(/\s*,\s*/).filter(Boolean);
+      const urls = rawText.split(/\s*(?:,|\s)\s*/).filter(Boolean).map(v => sanitizeUrl(v, true)).filter(Boolean);
+      if (!labels.length || !urls.length) return `<span style="color:#ff7b87">Broken comparison</span>`;
+
+      const cols = Math.max(1, labels.length);
+      let cards = "";
+      urls.forEach((url, idx) => {
+        const label = labels[idx % labels.length] || `Image ${idx+1}`;
+        cards += `<div class="comparison-item"><strong>${escapeHtml(label)}</strong><img src="${escapeAttr(url)}" loading="lazy" alt=""></div>`;
+      });
+      return `<div class="comparison"><div class="comparison-grid" style="grid-template-columns:repeat(${cols},minmax(220px,1fr))">${cards}</div></div>`;
+    }
+
+    default:
+      return body;
+  }
+}
+
+function addValidation(parsed) {
+  validation.innerHTML = "";
+
+  if (parsed.issues.length === 0) {
+    const ok = document.createElement("span");
+    ok.className = "issue ok";
+    ok.textContent = "No BBCode structure issues detected";
+    validation.appendChild(ok);
+  } else {
+    parsed.issues.slice(0, 8).forEach(msg => {
+      const el = document.createElement("span");
+      el.className = "issue";
+      el.textContent = msg;
+      validation.appendChild(el);
+    });
+    if (parsed.issues.length > 8) {
+      const more = document.createElement("span");
+      more.className = "issue";
+      more.textContent = `+${parsed.issues.length - 8} more`;
+      validation.appendChild(more);
+    }
+  }
+
+  const note = document.createElement("span");
+  note.className = "issue warn";
+  note.textContent = "Image host whitelist is tracker-side, so this page cannot confirm whether a host is whitelisted.";
+  validation.appendChild(note);
+}
+
+function render() {
+  const value = editor.value;
+  const parsed = parseBBCode(value);
+  preview.innerHTML = renderNode(parsed.ast);
+  editorStats.textContent = `${value.length.toLocaleString()} chars · ${value.split(/\r\n|\n/).length.toLocaleString()} lines`;
+  previewStats.textContent = `${parsed.tags.toLocaleString()} tags · ${parsed.issues.length} issue${parsed.issues.length === 1 ? "" : "s"}`;
+  addValidation(parsed);
+  try { localStorage.setItem("unit3d-bbcode-preview", value); } catch {}
+}
+
+function wrapSelection(before, after) {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const selected = editor.value.slice(start, end);
+  editor.setRangeText(before + selected + after, start, end, "end");
+  editor.focus();
+  if (!selected) editor.setSelectionRange(start + before.length, start + before.length);
+  render();
+}
+
+function insertText(text) {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  editor.setRangeText(text, start, end, "end");
+  editor.focus();
+  render();
+}
+
+document.querySelectorAll("[data-wrap]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const [before, after] = btn.dataset.wrap.split("|");
+    wrapSelection(before, after);
+  });
+});
+
+document.querySelectorAll("[data-insert]").forEach(btn => {
+  btn.addEventListener("click", () => insertText(btn.dataset.insert));
+});
+
+document.getElementById("applyColorBtn").addEventListener("click", () => {
+  wrapSelection(`[color=${document.getElementById("colorInput").value}]`, "[/color]");
+});
+
+document.getElementById("applySizeBtn").addEventListener("click", () => {
+  const n = Math.max(1, Math.min(999, parseInt(document.getElementById("sizeInput").value,10) || 18));
+  wrapSelection(`[size=${n}]`, "[/size]");
+});
+
+document.getElementById("linkBtn").addEventListener("click", () => {
+  const selected = editor.value.slice(editor.selectionStart, editor.selectionEnd);
+  if (selected && /^https?:\/\//i.test(selected.trim())) wrapSelection("[url]", "[/url]");
+  else wrapSelection("[url=https://example.com]", "[/url]");
+});
+
+document.getElementById("imageBtn").addEventListener("click", () => {
+  const selected = editor.value.slice(editor.selectionStart, editor.selectionEnd);
+  if (selected && /^https?:\/\//i.test(selected.trim())) wrapSelection("[img=500]", "[/img]");
+  else insertText("[img=500]https://example.com/image.jpg[/img]");
+});
+
+document.getElementById("listBtn").addEventListener("click", () => {
+  wrapSelection("[list]\n[*]", "\n[/list]");
+});
+
+document.getElementById("orderedListBtn").addEventListener("click", () => {
+  wrapSelection("[list=1]\n[*]", "\n[/list]");
+});
+
+document.getElementById("copyBtn").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(editor.value);
+    const btn = document.getElementById("copyBtn");
+    const old = btn.textContent;
+    btn.textContent = "Copied";
+    setTimeout(() => btn.textContent = old, 900);
+  } catch {
+    editor.select();
+    document.execCommand("copy");
+  }
+});
+
+document.getElementById("clearBtn").addEventListener("click", () => {
+  editor.value = "";
+  render();
+  editor.focus();
+});
+
+document.getElementById("loadSampleBtn").addEventListener("click", () => {
+  editor.value = sample;
+  render();
+  editor.focus();
+});
+
+previewModeBtn.addEventListener("click", () => {
+  document.body.classList.toggle("fullscreen-preview");
+  previewModeBtn.textContent = document.body.classList.contains("fullscreen-preview") ? "Editor + preview" : "Preview only";
+});
+
+editor.addEventListener("input", render);
+
+editor.addEventListener("keydown", e => {
+  if (e.key === "Tab") {
+    e.preventDefault();
+    insertText("    ");
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    e.preventDefault();
+    document.body.classList.toggle("fullscreen-preview");
+    previewModeBtn.textContent = document.body.classList.contains("fullscreen-preview") ? "Editor + preview" : "Preview only";
+  }
+});
+
+let initial = "";
+try { initial = localStorage.getItem("unit3d-bbcode-preview") || ""; } catch {}
+// Start clean each time this standalone lab is opened. The normal description
+// editor remains responsible for saved release descriptions.
+try { localStorage.removeItem("unit3d-bbcode-preview"); } catch {}
+editor.value = "";
+render();
+})();
+</script>
+</body>
+</html>
