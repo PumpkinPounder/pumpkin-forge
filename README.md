@@ -1,5 +1,7 @@
 # Pumpkin Forge
 
+> **Early beta:** Pumpkin Forge is still in very early development and is not yet 100% ready for production use. Test carefully, review every release manually, and keep backups of your local data.
+
 Pumpkin Forge is a local, review-first release builder for preparing media releases, generating release images, building UNIT3D-compatible descriptions, creating torrents, and submitting approved uploads to configured trackers.
 
 It is designed to keep the sensitive part of the workflow on the user's own computer. Tracker credentials, provider tokens, release history, job state, and local paths are stored in the local application database and are never part of the public source repository.
