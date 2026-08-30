@@ -298,7 +298,7 @@ class MediaScanner:
             files.append({
                 "path": str(path),
                 "relative_path": rel,
-                "file_name": path.name,
+                "file_name": clean_release_name(path.name),
                 "extension": path.suffix.lower(),
                 "size": stat.st_size,
                 "modified_at": stat.st_mtime,
@@ -314,7 +314,7 @@ class MediaScanner:
             "file_count": len(files),
             "total_size": total_size,
             "video_count": len(videos),
-            "videos": [{"file": file["relative_path"], **file["media"]} for file in videos],
+            "videos": [{"file": clean_release_name(file["relative_path"]), **file["media"]} for file in videos],
         }
         return files, media
 
