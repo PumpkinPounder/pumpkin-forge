@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-from .database import Database, utc_now
+from .database import Database, clean_release_name, utc_now
 
 
 VIDEO_EXTENSIONS = {".mp4", ".m4v", ".mkv", ".mov", ".avi", ".wmv", ".flv", ".webm", ".mpg", ".mpeg", ".ts", ".m2ts", ".mts", ".3gp", ".ogv", ".divx", ".asf"}
@@ -310,7 +310,7 @@ class MediaScanner:
         total_size = sum(file["size"] for file in files)
         videos = [file for file in files if file["is_video"]]
         media = {
-            "folder_name": root.name,
+            "folder_name": clean_release_name(root.name),
             "file_count": len(files),
             "total_size": total_size,
             "video_count": len(videos),
@@ -498,6 +498,8 @@ class MetadataService:
     @staticmethod
     def _build_query(folder_name: str, video_names: list[str]) -> tuple[str, str]:
         stem = Path(video_names[0]).stem if video_names else ""
+        folder_name = clean_release_name(folder_name)
+        stem = clean_release_name(stem)
         jav_match = re.search(r"\b([A-Za-z]{2,10}[-_ ]?\d{3,6})\b", f"{folder_name} {stem}")
         jav_code = jav_match.group(1).replace(" ", "-").replace("_", "-").upper() if jav_match else ""
         cleaned = folder_name or stem

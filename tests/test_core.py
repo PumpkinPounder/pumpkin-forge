@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from app.services import Bencode, BitPornTrackerValidator, TorrentService, UpdateChecker
+from app.database import clean_release_name
+from app.services import Bencode, BitPornTrackerValidator, MetadataService, TorrentService, UpdateChecker
 from main import is_stale_build_path
 
 
@@ -34,6 +35,17 @@ class CoreTests(unittest.TestCase):
         result = UpdateChecker(".", {"github_version_url": ""}).check()
         self.assertEqual(result["status"], "Not configured")
         self.assertEqual(UpdateChecker._version_key("v1.10.0"), (1, 10, 0))
+
+    def test_filename_style_release_names_are_readable(self) -> None:
+        self.assertEqual(
+            clean_release_name("sisswap_britt__blair_and_mae_milano_full_low_360р"),
+            "sisswap britt blair and mae milano full low 360р",
+        )
+        query, _ = MetadataService._build_query(
+            "sisswap_britt_blair_and_mae_milano_full_low_360р",
+            [],
+        )
+        self.assertEqual(query, "sisswap britt blair and mae milano full low 360р")
 
     def test_cached_update_status_uses_saved_github_version(self) -> None:
         checker = UpdateChecker(".", {

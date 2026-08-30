@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import threading
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -10,6 +12,16 @@ from typing import Any
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def clean_release_name(value: object) -> str:
+    """Make filename-style release names readable without changing source files."""
+
+    text = unicodedata.normalize("NFKC", str(value or ""))
+    text = text.replace("_", " ")
+    text = re.sub(r"\.{2,}", " ", text)
+    text = re.sub(r"\s+", " ", text).strip(" ._-–—")
+    return text
 
 
 DEFAULT_SETTINGS: dict[str, Any] = {
@@ -501,7 +513,7 @@ class Database:
 
     def create_job(self, source_path: str, tracker_id: int, announce_url: str, defaults: dict[str, Any] | None = None) -> int:
         source = str(Path(source_path).expanduser())
-        folder = Path(source).name or source
+        folder = clean_release_name(Path(source).name or source)
         defaults = defaults or {}
         now = utc_now()
         with self._lock, self.conn:
