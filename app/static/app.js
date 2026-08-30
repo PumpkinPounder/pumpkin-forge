@@ -394,3 +394,18 @@ function releaseActivityHtml(job){
 
 const originalOpenReviewWithActivity=openReview;
 openReview=async function(id){await originalOpenReviewWithActivity(id);const job=await api(`/api/jobs/${id}`);const content=$('#review-content');if(!content)return;const heading=[...content.querySelectorAll('p.eyebrow')].find(node=>node.textContent.trim()==='Logs');const box=heading?.nextElementSibling;if(!heading||!box)return;heading.textContent='Release activity';box.className='activity-list';box.innerHTML=releaseActivityHtml(job);const actions=document.createElement('div');actions.className='activity-actions';actions.innerHTML=`<button type="button" class="small-button" data-log="${Number(id)}">Open full diagnostics</button>`;box.insertAdjacentElement('afterend',actions);};
+
+function jobNumber(job){return `Job ${String(job?.id||0).padStart(3,'0')}`;}
+function jobTitle(job){return job?.upload_title||job?.folder_name||'Untitled release';}
+const originalShowWithCompleteJobs=show;
+show=(view)=>{originalShowWithCompleteJobs(view);if(view==='complete-jobs'){$('#page-title').textContent='Complete Jobs';const subtitle=document.querySelector('.page-subtitle');if(subtitle)subtitle.textContent='Successfully uploaded releases retained for reference by Job number.';document.title='Complete Jobs · Pumpkin Forge';}};
+const originalRenderJobsWithNumberedLabels=renderJobs;
+renderJobs=(target,jobs)=>{const activeJobs=(target==='#dashboard-jobs'||target==='#queue-list')?jobs.filter(job=>job.status!=='Completed'):jobs;originalRenderJobsWithNumberedLabels(target,activeJobs);const container=$(target);if(!container)return;container.querySelectorAll('.job-row').forEach((row,index)=>{const job=activeJobs[index];const name=row.querySelector('.job-name');if(name&&job)name.innerHTML=`<span class="job-number">${esc(jobNumber(job))}</span>${esc(jobTitle(job))}`;});};
+renderHistory=()=>renderJobs('#history-list',state.data.jobs.filter(job=>['Failed','Duplicate','Blocked'].includes(job.status)));
+function renderCompleteJobs(){renderJobs('#complete-jobs-list',state.data.jobs.filter(job=>job.status==='Completed'));}
+const originalRenderWithCompleteJobs=render;
+render=()=>{originalRenderWithCompleteJobs();renderCompleteJobs();};
+renderSelects=()=>{const descriptions=state.data.jobs.filter(j=>j.status==='Awaiting Description'||j.status==='Final Review');const reviews=state.data.jobs.filter(j=>j.status==='Final Review');$('#description-job').innerHTML='<option value="">Select a job</option>'+descriptions.map(j=>`<option value="${j.id}">${esc(jobNumber(j))} — ${esc(jobTitle(j))} — ${esc(j.status)}</option>`).join('');$('#review-job').innerHTML='<option value="">Select a job</option>'+reviews.map(j=>`<option value="${j.id}">${esc(jobNumber(j))} — ${esc(jobTitle(j))}</option>`).join('');if(state.selectedDescription)$('#description-job').value=state.selectedDescription;if(state.selectedReview)$('#review-job').value=state.selectedReview;};
+renderLogsSelect=()=>{const select=$('#logs-job');if(!select)return;const jobs=state.data.jobs.filter(j=>j.status!=='Completed');select.innerHTML='<option value="">Select a job</option>'+jobs.map(j=>`<option value="${j.id}">${esc(jobNumber(j))} — ${esc(jobTitle(j))} — ${esc(j.status)}</option>`).join('');if(state.selectedLogs)select.value=state.selectedLogs;};
+const originalRenderLogsViewWithNumber=renderLogsView;
+renderLogsView=()=>{originalRenderLogsViewWithNumber();const summary=$('#logs-summary');const job=state.logsJob;if(summary&&job){const item=summary.querySelector('.log-summary-item strong');if(item)item.innerHTML=`${esc(jobNumber(job))} — ${esc(jobTitle(job))}`;}};

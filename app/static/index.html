@@ -47,6 +47,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="m7 9 2 2-2 2M11 15h5"/></svg>
         <span>Logs</span>
       </button>
+      <button class="nav" data-view="complete-jobs">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="m8 12 2.5 2.5L16 9"/></svg>
+        <span>Complete Jobs</span>
+      </button>
       <button class="nav" data-view="bbcode-lab">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="m9 9-3 3 3 3M15 9l3 3-3 3"/></svg>
         <span>BBCode Lab</span>
@@ -140,7 +144,7 @@
 
     <section id="history" class="view">
       <div class="panel">
-        <div class="panel-head"><div><p class="eyebrow">Recorded activity</p><h2>History</h2><p class="panel-description">Completed, failed, blocked and duplicate jobs remain here for reference.</p></div></div>
+        <div class="panel-head"><div><p class="eyebrow">Recorded activity</p><h2>History</h2><p class="panel-description">Failed, blocked and duplicate jobs remain here for reference.</p></div></div>
         <div id="history-list" class="job-list"></div>
       </div>
     </section>
@@ -153,6 +157,15 @@
         </div>
         <div id="logs-summary" class="log-summary empty">Select a job to view its logs.</div>
         <div id="logs-list" class="log-list"></div>
+      </div>
+    </section>
+
+    <section id="complete-jobs" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <div><p class="eyebrow">Upload archive</p><h2>Complete Jobs</h2><p class="panel-description">Successfully uploaded releases, kept by Job number for quick lookup.</p></div>
+        </div>
+        <div id="complete-jobs-list" class="job-list"></div>
       </div>
     </section>
 
