@@ -658,8 +658,18 @@ class ThumbItService:
             command = command_template.format(folder=str(root), output=str(output), logo=logo, overlay=overlay)
             args = [part.strip('"') for part in shlex.split(command, posix=False)]
             env = os.environ.copy()
+            env["PYTHONIOENCODING"] = "utf-8"
+            env["PYTHONUTF8"] = "1"
             env["PUMPKIN_THUMBIT_OVERLAY_PATH"] = overlay
-            completed = subprocess.run(args, capture_output=True, text=True, timeout=int(self.settings.get("thumbit_timeout_seconds", 900)), env=env)
+            completed = subprocess.run(
+                args,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=int(self.settings.get("thumbit_timeout_seconds", 900)),
+                env=env,
+            )
             if completed.returncode != 0:
                 details = "\n".join(part for part in [completed.stderr, completed.stdout] if part).strip()
                 raise RuntimeError(f"Pumpkin's Thumb It command failed: {redact(details[-1500:] or 'No diagnostic output was returned.')}")

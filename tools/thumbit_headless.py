@@ -6,10 +6,21 @@ import argparse
 import importlib.util
 import os
 import shutil
+import sys
 from pathlib import Path
 
 
 VIDEO_EXTENSIONS = {".mp4", ".m4v", ".mkv", ".mov", ".avi", ".wmv", ".flv", ".webm", ".mpg", ".mpeg", ".ts", ".m2ts", ".mts", ".3gp", ".ogv", ".divx", ".asf"}
+
+
+def configure_utf8_output() -> None:
+    """Keep Windows console output safe for international filenames."""
+
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
 
 
 def load_thumbit():
@@ -23,6 +34,7 @@ def load_thumbit():
 
 
 def main() -> int:
+    configure_utf8_output()
     parser = argparse.ArgumentParser(description="Generate Pumpkin's Thumb It images without opening its GUI")
     parser.add_argument("--folder", required=True, help="Release folder to scan")
     parser.add_argument("--output", default="", help="Optional folder to collect generated images")

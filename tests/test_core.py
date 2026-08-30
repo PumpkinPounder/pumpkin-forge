@@ -4,6 +4,7 @@ import unittest
 
 from app.database import clean_release_name
 from app.services import Bencode, BitPornTrackerValidator, MetadataService, TorrentService, UpdateChecker
+from tools.thumbit_headless import configure_utf8_output
 from main import is_stale_build_path
 
 
@@ -46,6 +47,9 @@ class CoreTests(unittest.TestCase):
             [],
         )
         self.assertEqual(query, "sisswap britt blair and mae milano full low 360р")
+
+    def test_thumbit_headless_exposes_utf8_output_configuration(self) -> None:
+        self.assertTrue(callable(configure_utf8_output))
 
     def test_cached_update_status_uses_saved_github_version(self) -> None:
         checker = UpdateChecker(".", {
