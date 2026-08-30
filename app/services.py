@@ -656,6 +656,7 @@ class ThumbItService:
         if not existing and self.settings.get("thumbit_enabled", True) and command_template:
             overlay = str(self.settings.get("thumbit_overlay_image", "") or "")
             command = command_template.format(folder=str(root), output=str(output), logo=logo, overlay=overlay)
+            self.db.log(job_id, f"Thumb It started; input folder: {root}; output folder: {output}")
             args = [part.strip('"') for part in shlex.split(command, posix=False)]
             env = os.environ.copy()
             env["PYTHONIOENCODING"] = "utf-8"
@@ -673,6 +674,7 @@ class ThumbItService:
             if completed.returncode != 0:
                 details = "\n".join(part for part in [completed.stderr, completed.stdout] if part).strip()
                 raise RuntimeError(f"Pumpkin's Thumb It command failed: {redact(details[-1500:] or 'No diagnostic output was returned.')}")
+            self.db.log(job_id, f"Thumb It completed; output folder: {output}")
             existing = self._collect_images(root, output)
         if not existing:
             raise RuntimeError("No generated images found. Configure a headless Thumb It command or place generated images in the release scr folder.")

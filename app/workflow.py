@@ -265,7 +265,7 @@ class Workflow:
             tracker_id = int(folder["default_tracker_id"] or self.db.ensure_default_tracker())
             defaults = {"category": folder["default_category"], "type": folder["default_type"], "resolution": folder["default_resolution"], "anonymous": folder["default_anonymous"], "moderation_queue": folder["default_moderation_queue"], "personal_release": folder["default_personal_release"], "internal": folder["default_internal"], "auto_upload": folder["auto_upload"]}
             job_id = self.enqueue(str(destination), tracker_id, defaults)
-            self.db.log(job_id, f"Organized loose media file(s) from monitored folder: {folder['name']}")
+            self.db.log(job_id, f"Organized {moved} loose media file(s) into release folder: {destination}")
 
     @staticmethod
     def _folder_patterns(raw: Any) -> list[str]:
