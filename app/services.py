@@ -813,7 +813,7 @@ class BitPornTrackerClient:
             for index, row in enumerate(row for row in images if row["image_type"] in {"preview", "still"}):
                 files.append((f"description_images[{index}]", row["path"]))
         body, content_type = self._multipart(fields, files)
-        request = urllib.request.Request(endpoint, data=body, method="POST", headers={"Content-Type": content_type, "Authorization": f"Bearer {token}", "Accept": "application/json"})
+        request = urllib.request.Request(endpoint, data=body, method="POST", headers={"Content-Type": content_type, "Content-Length": str(len(body)), "Connection": "close", "Authorization": f"Bearer {token}", "Accept": "application/json", "User-Agent": "Pumpkin-Forge/1.0"})
         try:
             with urllib.request.urlopen(request, timeout=int(self.settings.get("bitporn_upload_timeout_seconds", 180))) as response:
                 raw = response.read(4 * 1024 * 1024 + 1)
@@ -822,7 +822,10 @@ class BitPornTrackerClient:
             raw = exc.read(1024 * 1024)
             raise RuntimeError(f"BitPorn upload failed: HTTP {exc.code} {redact(raw.decode('utf-8', 'replace'), [token])}") from exc
         except (urllib.error.URLError, TimeoutError) as exc:
-            raise RuntimeError(f"BitPorn upload request failed: {redact(str(exc), [token])}") from exc
+            detail = redact(str(exc), [token])
+            if "10060" in detail or "timed out" in detail.lower():
+                raise RuntimeError(f"BitPorn upload request timed out after {int(self.settings.get('bitporn_upload_timeout_seconds', 180))} seconds; check BitPorn uploads before retrying because the server may have received the torrent without returning a response") from exc
+            raise RuntimeError(f"BitPorn upload request failed: {detail}") from exc
         if len(raw) > 4 * 1024 * 1024:
             raise RuntimeError("BitPorn upload response exceeded the 4 MB safety limit")
         try:
@@ -846,7 +849,12 @@ class BitPornTrackerClient:
             if not path or not Path(path).is_file():
                 continue
             filename = Path(path).name
+            # Keep multipart header filenames ASCII-safe for older Windows and
+            # tracker HTTP handlers. The local file and displayed title remain
+            # unchanged; this only changes the transmitted header value.
+            header_filename = filename.encode("ascii", "replace").decode("ascii")
+            header_filename = re.sub(r"[^A-Za-z0-9._ -]", "_", header_filename).strip() or "upload.bin"
             mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
-            chunks.extend([f"--{boundary}\r\n".encode(), f'Content-Disposition: form-data; name="{name}"; filename="{filename}"\r\n'.encode(), f"Content-Type: {mime}\r\n\r\n".encode(), Path(path).read_bytes(), b"\r\n"])
+            chunks.extend([f"--{boundary}\r\n".encode(), f'Content-Disposition: form-data; name="{name}"; filename="{header_filename}"\r\n'.encode(), f"Content-Type: {mime}\r\n\r\n".encode(), Path(path).read_bytes(), b"\r\n"])
         chunks.append(f"--{boundary}--\r\n".encode())
         return b"".join(chunks), f"multipart/form-data; boundary={boundary}"
