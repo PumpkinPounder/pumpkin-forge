@@ -875,10 +875,21 @@ class BitPornTrackerClient:
             banner = next((row["path"] for row in images if row["image_type"] == "banner" and row["path"] != cover), "")
             if cover:
                 files.append(("cover", cover))
+                # Pumpkin Auto sends the cover through the description image
+                # collection as well as the dedicated cover field. BitPorn's
+                # [upimgN] tags refer to this collection, so omitting it here
+                # leaves [upimg0] unresolved on the published page.
+                files.append(("description_images[]", cover))
+                description = re.sub(
+                    r"\[upimg(\d+)\]",
+                    lambda match: f"[upimg{int(match.group(1)) + 1}]",
+                    str(fields["description"]),
+                )
+                fields["description"] = description
             if banner:
                 files.append(("banner", banner))
-            for index, row in enumerate(row for row in images if row["image_type"] in {"preview", "still"}):
-                files.append((f"description_images[{index}]", row["path"]))
+            for row in (row for row in images if row["image_type"] in {"preview", "still"}):
+                files.append(("description_images[]", row["path"]))
         body, content_type = self._multipart(fields, files)
         timeout = max(30, int(self.settings.get("bitporn_upload_timeout_seconds", 180)))
         headers = {
