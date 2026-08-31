@@ -151,6 +151,25 @@ class Workflow:
         self.db.log(job_id, "Job queued for retry")
         self.process_now(job_id)
 
+    def requeue_completed(self, job_id: int) -> None:
+        job = self.db.job(job_id)
+        if not job:
+            raise RuntimeError("Job not found")
+        if job["status"] != "Completed":
+            raise RuntimeError("Only completed jobs can be re-added to the queue")
+        self.db.update_job(
+            job_id,
+            status="Detected",
+            stage="Re-added to queue",
+            progress=0,
+            error="",
+            completed_at=None,
+            upload_result_json={},
+            duplicate_result_json={},
+        )
+        self.db.log(job_id, "Completed job re-added to queue for testing")
+        self.process_now(job_id)
+
     def save_description(self, job_id: int, values: dict[str, Any]) -> None:
         job = self.db.job(job_id)
         if not job:

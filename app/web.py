@@ -161,6 +161,8 @@ class AppServer:
                             workflow.process_now(job_id)
                         elif action == "retry":
                             workflow.retry(job_id)
+                        elif action == "requeue":
+                            workflow.requeue_completed(job_id)
                         elif action == "clear":
                             if not db.delete_job(job_id):
                                 raise ValueError("Job not found")
