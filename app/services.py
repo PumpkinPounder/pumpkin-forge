@@ -17,12 +17,79 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+import requests
+
 from .database import Database, clean_release_name, utc_now
 
 
 VIDEO_EXTENSIONS = {".mp4", ".m4v", ".mkv", ".mov", ".avi", ".wmv", ".flv", ".webm", ".mpg", ".mpeg", ".ts", ".m2ts", ".mts", ".3gp", ".ogv", ".divx", ".asf"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"}
 TEMP_SUFFIXES = {".part", ".tmp", ".partial", ".crdownload", ".download", ".!qb"}
+
+
+class BitPornUploadAmbiguous(RuntimeError):
+    """The request may have reached BitPorn, but no definitive response arrived."""
+
+
+class _StreamingMultipart:
+    """Fixed-length multipart stream that does not load media files into RAM."""
+
+    CHUNK_SIZE = 1024 * 1024
+
+    def __init__(self, fields: dict[str, str], files: list[tuple[str, str]]):
+        self.boundary = "----PumpkinForge" + uuid.uuid4().hex
+        self.parts: list[tuple[str, bytes | str]] = []
+        self.length = 0
+        self.started = False
+
+        for name, value in fields.items():
+            header = (
+                f"--{self.boundary}\r\n"
+                f'Content-Disposition: form-data; name="{name}"\r\n\r\n'
+            ).encode("ascii")
+            self._add_bytes(header)
+            self._add_bytes(str(value).encode("utf-8"))
+            self._add_bytes(b"\r\n")
+
+        for name, path in files:
+            if not path or not Path(path).is_file():
+                continue
+            file_path = Path(path)
+            filename = file_path.name
+            header_filename = filename.encode("ascii", "replace").decode("ascii")
+            header_filename = re.sub(r"[^A-Za-z0-9._ -]", "_", header_filename).strip() or "upload.bin"
+            mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+            header = (
+                f"--{self.boundary}\r\n"
+                f'Content-Disposition: form-data; name="{name}"; filename="{header_filename}"\r\n'
+                f"Content-Type: {mime}\r\n\r\n"
+            ).encode("ascii")
+            self._add_bytes(header)
+            self.parts.append(("file", str(file_path)))
+            self.length += file_path.stat().st_size
+            self._add_bytes(b"\r\n")
+
+        self._add_bytes(f"--{self.boundary}--\r\n".encode("ascii"))
+
+    def _add_bytes(self, value: bytes) -> None:
+        self.parts.append(("bytes", value))
+        self.length += len(value)
+
+    def __iter__(self) -> Iterable[bytes]:
+        self.started = True
+        for kind, value in self.parts:
+            if kind == "bytes":
+                yield value  # type: ignore[misc]
+                continue
+            with Path(value).open("rb") as handle:  # type: ignore[arg-type]
+                while True:
+                    chunk = handle.read(self.CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    yield chunk
+
+    def __len__(self) -> int:
+        return self.length
 
 
 def safe_json(value: Any) -> Any:
@@ -813,19 +880,34 @@ class BitPornTrackerClient:
             for index, row in enumerate(row for row in images if row["image_type"] in {"preview", "still"}):
                 files.append((f"description_images[{index}]", row["path"]))
         body, content_type = self._multipart(fields, files)
-        request = urllib.request.Request(endpoint, data=body, method="POST", headers={"Content-Type": content_type, "Content-Length": str(len(body)), "Connection": "close", "Authorization": f"Bearer {token}", "Accept": "application/json", "User-Agent": "Pumpkin-Forge/1.0"})
+        timeout = max(30, int(self.settings.get("bitporn_upload_timeout_seconds", 180)))
+        headers = {
+            "Content-Type": content_type,
+            "Content-Length": str(len(body)),
+            "Connection": "close",
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+            "User-Agent": "Pumpkin-Forge/1.0",
+        }
         try:
-            with urllib.request.urlopen(request, timeout=int(self.settings.get("bitporn_upload_timeout_seconds", 180))) as response:
-                raw = response.read(4 * 1024 * 1024 + 1)
-                status = response.status
-        except urllib.error.HTTPError as exc:
-            raw = exc.read(1024 * 1024)
-            raise RuntimeError(f"BitPorn upload failed: HTTP {exc.code} {redact(raw.decode('utf-8', 'replace'), [token])}") from exc
-        except (urllib.error.URLError, TimeoutError) as exc:
+            with requests.Session() as session:
+                session.trust_env = False
+                response = session.post(endpoint, data=body, headers=headers, timeout=(30, timeout), allow_redirects=False, stream=True)
+                try:
+                    raw = response.raw.read(4 * 1024 * 1024 + 1)
+                    status = response.status_code
+                finally:
+                    response.close()
+        except requests.exceptions.RequestException as exc:
             detail = redact(str(exc), [token])
-            if "10060" in detail or "timed out" in detail.lower():
-                raise RuntimeError(f"BitPorn upload request timed out after {int(self.settings.get('bitporn_upload_timeout_seconds', 180))} seconds; check BitPorn uploads before retrying because the server may have received the torrent without returning a response") from exc
-            raise RuntimeError(f"BitPorn upload request failed: {detail}") from exc
+            message = f"BitPorn upload request timed out after {timeout} seconds" if isinstance(exc, requests.exceptions.Timeout) else f"BitPorn upload request failed: {detail}"
+            if body.started:
+                raise BitPornUploadAmbiguous(message + "; check BitPorn uploads before retrying because the server may have received the torrent without returning a response") from exc
+            raise RuntimeError(message) from exc
+        except OSError as exc:
+            raise RuntimeError(f"BitPorn upload could not read a local upload file: {redact(str(exc), [token])}") from exc
+        if status >= 400:
+            raise RuntimeError(f"BitPorn upload failed: HTTP {status} {redact(raw.decode('utf-8', 'replace'), [token])}")
         if len(raw) > 4 * 1024 * 1024:
             raise RuntimeError("BitPorn upload response exceeded the 4 MB safety limit")
         try:
@@ -840,21 +922,6 @@ class BitPornTrackerClient:
         return {"status": status, "response": payload, "uploaded_at": utc_now()}
 
     @staticmethod
-    def _multipart(fields: dict[str, str], files: list[tuple[str, str]]) -> tuple[bytes, str]:
-        boundary = "----PumpkinForge" + uuid.uuid4().hex
-        chunks: list[bytes] = []
-        for name, value in fields.items():
-            chunks.extend([f"--{boundary}\r\n".encode(), f'Content-Disposition: form-data; name="{name}"\r\n\r\n'.encode(), str(value).encode("utf-8"), b"\r\n"])
-        for name, path in files:
-            if not path or not Path(path).is_file():
-                continue
-            filename = Path(path).name
-            # Keep multipart header filenames ASCII-safe for older Windows and
-            # tracker HTTP handlers. The local file and displayed title remain
-            # unchanged; this only changes the transmitted header value.
-            header_filename = filename.encode("ascii", "replace").decode("ascii")
-            header_filename = re.sub(r"[^A-Za-z0-9._ -]", "_", header_filename).strip() or "upload.bin"
-            mime = mimetypes.guess_type(filename)[0] or "application/octet-stream"
-            chunks.extend([f"--{boundary}\r\n".encode(), f'Content-Disposition: form-data; name="{name}"; filename="{header_filename}"\r\n'.encode(), f"Content-Type: {mime}\r\n\r\n".encode(), Path(path).read_bytes(), b"\r\n"])
-        chunks.append(f"--{boundary}--\r\n".encode())
-        return b"".join(chunks), f"multipart/form-data; boundary={boundary}"
+    def _multipart(fields: dict[str, str], files: list[tuple[str, str]]) -> tuple[_StreamingMultipart, str]:
+        body = _StreamingMultipart(fields, files)
+        return body, f"multipart/form-data; boundary={body.boundary}"

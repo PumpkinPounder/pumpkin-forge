@@ -11,6 +11,7 @@ from typing import Any
 from .database import Database, utc_now
 from .services import (
     BITPORN_IMAGE_HOST_BLOCK_MESSAGE,
+    BitPornUploadAmbiguous,
     BitPornImageHostService,
     BitPornTrackerClient,
     BitPornTrackerValidator,
@@ -352,6 +353,9 @@ class Workflow:
     def _upload_job_safe(self, job_id: int) -> None:
         try:
             self._upload_job(job_id)
+        except BitPornUploadAmbiguous as exc:
+            self.db.update_job(job_id, status="Upload Unconfirmed", stage="Upload Unconfirmed", error=str(exc))
+            self.db.log(job_id, str(exc), "warning")
         except Exception as exc:
             self.db.update_job(job_id, status="Failed", stage="Upload Failed", error=str(exc))
             self.db.log(job_id, str(exc), "error")
